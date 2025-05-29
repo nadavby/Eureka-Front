@@ -2,10 +2,7 @@
 
 import { FC, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { usePosts } from "../../hooks/usePost";
-import { Post } from "../../services/post-service";
 import userService from "../../services/user-service";
-import postService from "../../services/post-service";
 import defaultAvatar from "../../assets/avatar.png";
 import { Navigate, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -42,7 +39,6 @@ interface UserData {
 
 const UserProfile: FC = () => {
   const { currentUser, updateAuthState, isAuthenticated, loading } = useAuth();
-  const { posts, setPosts } = usePosts();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [localUser, setLocalUser] = useState<UserData | null>(null);
@@ -162,47 +158,6 @@ const UserProfile: FC = () => {
     }
   };
 
-  const handleLike = async (postId: string) => {
-    if (!localUser || typeof localUser._id !== "string") {
-      console.error("User is not valid:", localUser);
-      return;
-    }
-
-    try {
-      await postService.likePost(postId);
-      setPosts((prevPosts: Post[]) =>
-        prevPosts.map((post) => {
-          if (post._id === postId) {
-            const hasLiked = localUser._id ? post.likes.includes(localUser._id) : false;
-
-            return {
-              ...post,
-              likes: hasLiked
-                ? post.likes.filter((id) => id !== localUser._id)
-                : [...post.likes, localUser._id],
-            } as Post;
-          }
-          return post;
-        })
-      );
-    } catch (error) {
-      console.error("Error toggling like:", error);
-    }
-  };
-
-  const handleDelete = async (postId: string) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-
-    try {
-      await postService.deletePost(postId);
-      setPosts((prevPosts: Post[]) =>
-        prevPosts.filter((post) => post._id !== postId)
-      );
-    } catch (error) {
-      console.error("Error deleting post:", error);
-    }
-  };
-
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return "N/A";
     const dateObj = date instanceof Date ? date : new Date(date);
@@ -211,7 +166,6 @@ const UserProfile: FC = () => {
 
   if (!loading && !isAuthenticated) return <Navigate to="/login" />;
   if (!localUser) return <div>Loading...</div>;
-  const userPosts = posts.filter((post: Post) => post.owner === localUser.userName);
 
   const { ref: profileImageRef, ...profileImageRest } = register("profileImage");
 
@@ -353,92 +307,6 @@ const UserProfile: FC = () => {
             </div>
           </div>
         </form>
-      </div>
-      
-      <div className="mt-4">
-        <h3>My Posts</h3>
-        {userPosts.length === 0 ? (
-          <p className="alert alert-info">No posts yet</p>
-        ) : (
-          <div className="row">
-            {userPosts.map((post) => (
-              <div
-                key={post._id}
-                className="col-md-6 col-lg-4 mb-4">
-                <div className="card shadow-sm h-100">
-                  <div className="card-body d-flex flex-column">
-                    <h5 className="card-title text-center">{post.title}</h5>
-                    <p className="card-text flex-grow-1">{post.content}</p>
-                    <div className="image-container" style={{ minHeight: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {post.image ? (
-                        <img
-                          src={post.image}
-                          alt={post.title}
-                          className="img-fluid my-2"
-                          style={{ height: "200px", objectFit: "cover", width: "100%" }}
-                        />
-                      ) : (
-                        <div className="no-image-placeholder" style={{ height: "200px", width: "100%", backgroundColor: "#f8f9fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span className="text-muted">No image</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-muted mb-2">Author: {post.owner}</p>
-                    <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                      <button
-                        className={`btn btn-sm d-flex align-items-center gap-2 ${
-                          localUser._id && post.likes.includes(localUser._id)
-                            ? "btn-danger"
-                            : "btn-outline-primary"
-                        }`}
-                        onClick={() => handleLike(post._id)}>
-                        <FontAwesomeIcon icon={faThumbsUp} />
-                        {post.likes.length}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
-                        onClick={() =>
-                          navigate("/comments", {
-                            state: { comments: post.comments, postId: post._id },
-                          })
-                        }>
-                        <FontAwesomeIcon icon={faComment} />
-                        {post.comments.length}
-                      </button>
-                      
-                      <button
-                        className="btn btn-sm btn-warning d-flex align-items-center gap-2"
-                        onClick={() => navigate(`/update-post/${post._id}`)}>
-                        <FontAwesomeIcon icon={faEdit} /> Update
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger d-flex align-items-center gap-2"
-                        onClick={() => handleDelete(post._id)}>
-                        <FontAwesomeIcon icon={faTrash} /> Delete
-                      </button>
-                    </div>
-                    <div className="d-flex justify-content-between mt-auto">
-                      <small className="text-muted fst-italic">
-                        Created: {formatDate(post.createdAt)}
-                      </small>
-                      {post.updatedAt && 
-                       (!post.createdAt || 
-                        (post.updatedAt instanceof Date && post.createdAt instanceof Date && 
-                         post.updatedAt.getTime() !== post.createdAt.getTime()) ||
-                        (!(post.updatedAt instanceof Date) && !(post.createdAt instanceof Date) && 
-                         new Date(post.updatedAt).getTime() !== new Date(post.createdAt).getTime())
-                       ) && (
-                        <small className="text-muted fst-italic">
-                          Updated: {formatDate(post.updatedAt)}
-                        </small>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
