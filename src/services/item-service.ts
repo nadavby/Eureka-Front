@@ -275,14 +275,6 @@ const deleteItem = (id: string) => {
   return { request, abort: () => abortController.abort() };
 };
 
-const getMatchResults = (itemId: string) => {
-  const abortController = new AbortController();
-  const request = apiClient.get<MatchResult[]>(`/items/${itemId}/matches`, {
-    signal: abortController.signal,
-  });
-  return { request, abort: () => abortController.abort() };
-};
-
 export default {
   getAllItems,
   getAllLostItems,
@@ -292,5 +284,4 @@ export default {
   addItem,
   updateItem,
   deleteItem,
-  getMatchResults,
 }; 
