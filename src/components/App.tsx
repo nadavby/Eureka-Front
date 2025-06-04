@@ -1,12 +1,11 @@
 /** @format */
-
 import { Routes, Route } from "react-router-dom";
 import { Login } from "./Login";
 import { RegistrationForm } from "./RegristrationForm";
-import PostList from "./ListPosts";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
 import ItemUpload from "./itemUpload";
+import LostItems from "./LostItems";
 function App() {
   const { isAuthenticated, loading } = useAuth();
 
@@ -16,7 +15,7 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <PostList /> : <Login />}
+          element={isAuthenticated ? <LostItems /> : <Login />}
         />
         <Route
           path="/login"
@@ -27,10 +26,10 @@ function App() {
           element={<RegistrationForm />}
         />
         <Route
-          path="/posts"
-          element={<PostList />}
+          path="/lost-items"
+          element={<LostItems />}
         />
-         <Route
+        <Route
           path="/profile"
           element={<UserProfile />}
         />
@@ -39,7 +38,6 @@ function App() {
           element={<ItemUpload />}
         />
       </Routes>
-
     </>
   );
 }
