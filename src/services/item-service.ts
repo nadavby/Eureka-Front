@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/** @format */
-
 import { apiClient, CanceledError } from "./api-client";
 
 export { CanceledError };
@@ -12,132 +10,51 @@ export interface Item {
   category: string;
   location: string;
   date: string;
-  itemType: 'lost' | 'found';
-  imgURL?: string;
+  itemType: "lost" | "found";
+  imageUrl: string;
   owner: string;
   ownerName?: string;
   ownerEmail?: string;
-  matchResults?: MatchResult[];
   isResolved?: boolean;
-  resolvedWithItemId?: string;
+  matchedId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface MatchResult {
-  _id?: string;
-  matchedItemId: string;
-  similarity: number;
-  itemName: string;
-  itemDescription: string;
-  itemImgURL?: string;
-  ownerName: string;
-  ownerContact?: string;
-}
-
-export interface RawItemResponse {
-  _id?: string;
-  id?: string;
-  name: string;
-  description?: string;
-  category?: string;
-  location?: string;
-  date?: string;
-  itemType?: string;
-  imgURL?: string;
-  imageUrl?: string;
+const getAllItems = (filters?: {
+  itemType?: "lost" | "found";
   userId?: string;
-  owner?: string;
-  ownerName?: string;
-  ownerEmail?: string;
-  matchResults?: MatchResult[];
-  isResolved?: boolean;
-  resolvedWithItemId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  _doc?: {
-    description?: string;
-    category?: string;
-    location?: string;
-    date?: string;
-    itemType?: string;
-    imageUrl?: string;
-    userId?: string;
-    isResolved?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-  };
-}
-
-export const getItemImageUrl = (url: string | undefined): string => {
-  if (!url) return '';
-  
-  console.log("item-service - Processing image URL:", url);
-  
-  if (url.startsWith('http')) {
-    return url;
-  } else if (url.startsWith('/')) {
-    return `http://localhost:3000${url}`;
-  } else {
-    return `http://localhost:3000/uploads/${url}`;
-  }
-};
-
-const getAllItems = (filters?: { itemType?: 'lost' | 'found', userId?: string }) => {
+}) => {
   const abortController = new AbortController();
-  
-  let url = '/items';
+
+  let url = "/items";
   const queryParams: string[] = [];
-  
+
   if (filters?.itemType) {
     queryParams.push(`itemType=${filters.itemType}`);
   }
-  
+
   if (filters?.userId) {
     queryParams.push(`userId=${filters.userId}`);
   }
-  
+
   if (queryParams.length > 0) {
-    url += '?' + queryParams.join('&');
+    url += "?" + queryParams.join("&");
   }
-  
-  console.log('Requesting items with URL:', url);
-  
+
   const request = apiClient.get<Item[]>(url, {
     signal: abortController.signal,
   });
-  
-  const enhancedRequest = request.then(response => {
-    console.log('Response received:', response);
-    if (response.data && response.data.length > 0) {
-      const firstItem = response.data[0];
-      if (!Object.prototype.hasOwnProperty.call(firstItem, 'name') && Object.prototype.hasOwnProperty.call(firstItem, 'data')) {
-        console.log("Transforming nested item structure...");
-        response.data = response.data.map((item: any) => item.data || item);
-      }
-    }
-    return response;
-  }).catch(error => {
-    if (error instanceof CanceledError) {
-      console.log('Request was canceled');
-      throw error;
-    }
-    console.error('Error fetching items:', error.response || error);
-    throw error;
-  });
-  
-  return {
-    request: enhancedRequest,
-    abort: () => abortController.abort()
-  };
+
+  return { request, abort: () => abortController.abort() };
 };
 
 const getAllLostItems = (userId?: string) => {
-  return getAllItems({ itemType: 'lost', userId });
+  return getAllItems({ itemType: "lost", userId });
 };
 
 const getAllFoundItems = (userId?: string) => {
-  return getAllItems({ itemType: 'found', userId });
+  return getAllItems({ itemType: "found", userId });
 };
 
 const getItemById = (id: string) => {
@@ -145,87 +62,46 @@ const getItemById = (id: string) => {
   const request = apiClient.get<Item>(`/items/${id}`, {
     signal: abortController.signal,
   });
-  
-  const enhancedRequest = request.then(response => {
-    console.log("Raw item response:", response.data);
-    
-    if (response.data) {
-      const item = response.data as any;
-      if (!Object.prototype.hasOwnProperty.call(item, 'name') && Object.prototype.hasOwnProperty.call(item, 'data')) {
-        console.log("Transforming nested item details structure...");
-        response.data = item.data;
-      }
-    }
-    
-    return response;
-  });
-  
-  return { 
-    request: enhancedRequest, 
-    abort: () => abortController.abort() 
+
+  return {
+    request: request,
+    abort: () => abortController.abort(),
   };
 };
 
 const getItemsByUser = (userId: string) => {
   const abortController = new AbortController();
-  console.log('Fetching items for user:', userId);
-  
   const request = apiClient.get<Item[]>(`/items?userId=${userId}`, {
     signal: abortController.signal,
   });
-  
-  const enhancedRequest = request.then(response => {    
-    console.log('User items response:', response.data);
-    
-    if (response.data && response.data.length > 0) {
-      const firstItem = response.data[0] as any;
-      if (!Object.prototype.hasOwnProperty.call(firstItem, 'name') && Object.prototype.hasOwnProperty.call(firstItem, 'data')) {
-        console.log("Transforming nested user items structure...");
-        response.data = response.data.map((item: any) => item.data || item);
-      }
-    }
-    
-    return response;
-  }).catch(error => {
-    console.error('Error fetching user items:', error.response || error);
-    throw error;
-  });
-  
-  return { 
-    request: enhancedRequest, 
-    abort: () => abortController.abort() 
+
+  return {
+    request: request,
+    abort: () => abortController.abort(),
   };
 };
 
 const addItem = async (formData: FormData) => {
   try {
     for (const pair of formData.entries()) {
-      if (pair[0] === 'image') {
+      if (pair[0] === "image") {
         const file = pair[1] as File;
-        console.log(`${pair[0]}: [File] ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+        console.log(
+          `${pair[0]}: [File] ${file.name}, type: ${file.type}, size: ${file.size} bytes`
+        );
       } else {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
     }
-    
-    return apiClient.post('/items', formData, {
+
+    return apiClient.post("/items", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-      }
+        "Content-Type": "multipart/form-data",
+      },
     });
   } catch (error: any) {
-    console.error('Error in addItem:', error);
-    
-    if (error.response) {
-      console.error("Response data:", error.response.data);
-      console.error("Response status:", error.response.status);
-      console.error("Response headers:", error.response.headers);
-    } else if (error.request) {
-      console.error("No response received:", error.request);
-    } else {
-      console.error("Request setup error:", error.message);
-    }
-    
+    console.error("Error in addItem:", error);
+
     throw error;
   }
 };
@@ -233,36 +109,30 @@ const addItem = async (formData: FormData) => {
 const updateItem = async (id: string, item: Partial<Item>, image?: File) => {
   try {
     if (!image) {
-      console.log("No image provided for update - using direct JSON PUT");
       return apiClient.put<Item>(`/items/${id}`, item, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
     }
-    console.log("Image provided for update - using FormData");
     const formData = new FormData();
-    if (item.name) formData.append('name', item.name);
-    if (item.description) formData.append('description', item.description);
-    if (item.category) formData.append('category', item.category);
-    if (item.location) formData.append('location', item.location);
-    if (item.date) formData.append('date', item.date);
-    if (item.itemType) formData.append('itemType', item.itemType);
-    
-    formData.append('itemData', JSON.stringify(item));
-    formData.append('image', image, image.name);
+    if (item.name) formData.append("name", item.name);
+    if (item.description) formData.append("description", item.description);
+    if (item.category) formData.append("category", item.category);
+    if (item.location) formData.append("location", item.location);
+    if (item.date) formData.append("date", item.date);
+    if (item.itemType) formData.append("itemType", item.itemType);
+
+    formData.append("itemData", JSON.stringify(item));
+    formData.append("image", image, image.name);
     return apiClient.put<Item>(`/items/${id}`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
   } catch (error: any) {
     console.error("Error in updateItem:", error.message);
-    if (error.response) {
-      console.error("Response data:", error.response.data);
-      console.error("Response status:", error.response.status);
-      console.error("Response headers:", error.response.headers);
-    }
+
     throw error;
   }
 };
@@ -284,4 +154,4 @@ export default {
   addItem,
   updateItem,
   deleteItem,
-}; 
+};
