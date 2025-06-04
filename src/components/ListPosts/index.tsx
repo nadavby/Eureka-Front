@@ -98,7 +98,7 @@ const ListPosts: FC = () => {
       </div>
       <button
         className="btn btn-success position-fixed bottom-0 end-0 m-3"
-        onClick={() => navigate("/create-post")}>
+        onClick={() => navigate("/item-upload")}>
         <FontAwesomeIcon icon={faPlus} className="me-2" /> Add Post
       </button>
     </div>

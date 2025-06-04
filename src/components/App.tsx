@@ -6,7 +6,7 @@ import { RegistrationForm } from "./RegristrationForm";
 import PostList from "./ListPosts";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
-
+import ItemUpload from "./itemUpload";
 function App() {
   const { isAuthenticated, loading } = useAuth();
 
@@ -33,6 +33,10 @@ function App() {
          <Route
           path="/profile"
           element={<UserProfile />}
+        />
+        <Route
+          path="/item-upload"
+          element={<ItemUpload />}
         />
       </Routes>
 
