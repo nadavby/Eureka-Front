@@ -12,7 +12,7 @@ export interface Item {
   date: string;
   itemType: "lost" | "found";
   imageUrl: string;
-  owner: string;
+  userId: string;
   ownerName?: string;
   ownerEmail?: string;
   isResolved?: boolean;
