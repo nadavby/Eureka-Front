@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import itemService, { CanceledError, Item } from "../services/item-service";
+import itemService, { Item } from "../services/item-service";
 
 export const useLostItems = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -17,8 +17,8 @@ export const useLostItems = () => {
         setItems(res.data);
         setIsLoading(false);
       })
-      .catch((err) => {
-        if (err instanceof CanceledError || err.code === "ERR_CANCELED") {
+      .catch((err:any) => {
+        if (err || err.code === "ERR_CANCELED") {
           console.log("Request was canceled");
           return;
         }
