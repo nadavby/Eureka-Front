@@ -34,7 +34,7 @@ export const useMatch = () => {
     setIsLoading(true);
     setError(null);
 
-    const { request, abort } = matchService.getById(matchId);
+    const { request } = matchService.getById(matchId);
     
     try {
       const response = await request;
@@ -46,8 +46,6 @@ export const useMatch = () => {
     } finally {
       setIsLoading(false);
     }
-
-    return () => abort();
   }, []);
 
   const deleteMatch = useCallback(async (matchId: string) => {
