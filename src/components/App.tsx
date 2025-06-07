@@ -4,7 +4,7 @@ import { Login } from "./Login";
 import { RegistrationForm } from "./RegristrationForm";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
-import ItemUpload from "./itemUpload";
+import ItemUpload from "./ItemUpload";
 import LostItems from "./LostItems";
 function App() {
   const { isAuthenticated, loading } = useAuth();
