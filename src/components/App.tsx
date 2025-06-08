@@ -6,12 +6,16 @@ import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
 import ItemUpload from "./ItemUpload";
 import LostItems from "./LostItems";
+import ItemDetail from "./ItemDetail";
+import Navigation from "./Navigation";
+
 function App() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) return <p>Loading...</p>;
   return (
     <>
+      <Navigation />
       <Routes>
         <Route
           path="/"
@@ -38,6 +42,10 @@ function App() {
           element={<ItemUpload />}
         />
       </Routes>
+      <Route
+        path="/item/:itemId"
+        element={<ItemDetail />}
+      />
     </>
   );
 }
