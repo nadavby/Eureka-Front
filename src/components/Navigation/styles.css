@@ -1,0 +1,157 @@
+.navbar {
+  padding: 0.75rem 1rem;
+}
+
+.navbar .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.navbar-brand {
+  margin-right: 0;
+  font-size: 1.25rem;
+}
+
+.notification-center-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.navbar-toggler {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: transparent;
+}
+
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+  outline: none;
+}
+
+.navbar-toggler-icon {
+  transition: transform 0.3s ease;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+  transform: rotate(90deg);
+}
+
+.navbar-collapse-container {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  background-color: #0d6efd;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  z-index: 1000;
+}
+
+.navbar-collapse-container.show {
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar-nav {
+  padding: 0.5rem 1rem;
+}
+
+.nav-item {
+  padding: 0.25rem 0;
+}
+
+.nav-link {
+  padding: 0.75rem 1rem !important;
+  border-radius: 4px;
+  color: white !important;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  font-weight: bold;
+}
+
+.navbar-toggler-width {
+  width: 56px;
+}
+
+.navbar-brand-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    transition: all 0.3s ease;
+    max-height: 0;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+  
+  .navbar-collapse.show {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  
+  .nav-item {
+    padding: 0.25rem 0;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px;
+  }
+  
+  .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.notification-bell-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-profile {
+  color: white;
+  background: none;
+  border: none;
+  padding: 0.4rem 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-profile:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.btn-profile:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+  outline: none;
+} 
