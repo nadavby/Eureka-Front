@@ -43,9 +43,9 @@ function App() {
         />
       </Routes>
       <Route
-            path="/item/:itemId"
-            element={<ItemDetail />}
-       />
+        path="/item/:itemId"
+        element={<ItemDetail />}
+      />
     </>
   );
 }
