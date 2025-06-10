@@ -1,6 +1,4 @@
-/** @format */
-
-import { FC, useState } from "react";
+import { FC, useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -10,18 +8,27 @@ import {
   faSearch,
   faUpload,
   faLightbulb,
+  faMapMarkerAlt,
+  faQrcode,
+  faComments,
+  faBell
 } from "@fortawesome/free-solid-svg-icons";
-import "./styles.css";
+import { useNotifications } from "../../hooks/useNotifications";
+import NotificationProvider from "../NotificationProvider";
+import "./styles.css"; 
 
 const Navigation: FC = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, currentUser } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isQRDropdownOpen, setIsQRDropdownOpen] = useState(false);
   const navigate = useNavigate();
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-
+  
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
@@ -30,75 +37,95 @@ const Navigation: FC = () => {
     <nav className="navbar navbar-dark bg-primary">
       <div className="container">
         <div className="order-0">
-          <Link
-            className="navbar-brand d-flex align-items-center"
-            to="/lost-items"
-            onClick={closeMenu}>
-            <FontAwesomeIcon
-              icon={faLightbulb}
-              className="me-2"
-            />
+          <Link className="navbar-brand d-flex align-items-center" to="/lost-items" onClick={closeMenu}>
+            <FontAwesomeIcon icon={faLightbulb} className="me-2" />
             <span>Eureka</span>
           </Link>
         </div>
-
+        
         {!loading && isAuthenticated && (
-          <>
+          <>    
             <div className="d-flex align-items-center order-2">
-              <button
-                className="btn btn-profile me-3"
-                onClick={() => navigate("/profile")}
-                title="My Profile"
-                aria-label="Go to user profile">
-                <FontAwesomeIcon
-                  icon={faUserCircle}
-                  size="lg"
-                />
-              </button>
-
-              <button
+              {currentUser && (
+                <>
+                  <NotificationProvider
+                    notificationTrigger={
+                      <button 
+                        className="btn btn-profile notification-button me-3"
+                        title="Notifications"
+                        aria-label="View notifications"
+                      >
+                        <FontAwesomeIcon icon={faBell} size="lg" />
+                        {unreadCount > 0 && (
+                          <span className="notification-badge">{unreadCount}</span>
+                        )}
+                      </button>
+                    }
+                  >
+                    {null}
+                  </NotificationProvider>
+                  <button 
+                    className="btn btn-profile me-3" 
+                    onClick={() => navigate("/profile")}
+                    title="My Profile"
+                    aria-label="Go to user profile"
+                  >
+                    <FontAwesomeIcon icon={faUserCircle} size="lg" />
+                  </button>
+                </>
+              )}
+              <button 
                 className="navbar-toggler"
                 type="button"
                 onClick={toggleMenu}
                 aria-controls="navbarNav"
                 aria-expanded={isMenuOpen}
-                aria-label="Toggle navigation">
+                aria-label="Toggle navigation"
+              >
                 <span className="navbar-toggler-icon"></span>
               </button>
             </div>
-
-            <div
-              className={`navbar-collapse-container ${
-                isMenuOpen ? "show" : ""
-              }`}
-              id="navbarNav">
+            
+            <div className={`navbar-collapse-container ${isMenuOpen ? 'show' : ''}`}>
               <ul className="navbar-nav">
                 <li className="nav-item">
                   <Link
                     to="/lost-items"
-                    className={`nav-link ${
-                      location.pathname === "/lost-items" ? "active" : ""
-                    }`}
-                    onClick={closeMenu}>
-                    <FontAwesomeIcon
-                      icon={faSearch}
-                      className="me-1"
-                    />
+                    className={`nav-link ${location.pathname === '/lost-items' ? 'active' : ''}`}
+                    onClick={closeMenu}
+                  >
+                    <FontAwesomeIcon icon={faSearch} className="me-1" />
                     Lost Items
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link
-                    to="/item-upload"
-                    className={`nav-link ${
-                      location.pathname === "/item-upload" ? "active" : ""
-                    }`}
-                    onClick={closeMenu}>
-                    <FontAwesomeIcon
-                      icon={faUpload}
-                      className="me-1"
-                    />
+                    to="/upload-item"
+                    className={`nav-link ${location.pathname === '/upload-item' ? 'active' : ''}`}
+                    onClick={closeMenu}
+                  >
+                    <FontAwesomeIcon icon={faUpload} className="me-1" />
                     Upload Item
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    to="/map"
+                    className={`nav-link ${location.pathname === '/map' ? 'active' : ''}`}
+                    onClick={closeMenu}
+                  >
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="me-1" />
+                    Map
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    to="/chats"
+                    className={`nav-link ${location.pathname === '/chats' ? 'active' : ''}`}
+                    onClick={closeMenu}
+                  >
+                    <FontAwesomeIcon icon={faComments} className="me-1" />
+                    Chats
                   </Link>
                 </li>
               </ul>
@@ -110,4 +137,4 @@ const Navigation: FC = () => {
   );
 };
 
-export default Navigation;
+export default Navigation; 
