@@ -106,37 +106,6 @@ const addItem = async (formData: FormData) => {
   }
 };
 
-const updateItem = async (id: string, item: Partial<Item>, image?: File) => {
-  try {
-    if (!image) {
-      return apiClient.put<Item>(`/items/${id}`, item, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    }
-    const formData = new FormData();
-    if (item.name) formData.append("name", item.name);
-    if (item.description) formData.append("description", item.description);
-    if (item.category) formData.append("category", item.category);
-    if (item.location) formData.append("location", item.location);
-    if (item.date) formData.append("date", item.date);
-    if (item.itemType) formData.append("itemType", item.itemType);
-
-    formData.append("itemData", JSON.stringify(item));
-    formData.append("image", image, image.name);
-    return apiClient.put<Item>(`/items/${id}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  } catch (error: any) {
-    console.error("Error in updateItem:", error.message);
-
-    throw error;
-  }
-};
-
 const deleteItem = (id: string) => {
   const abortController = new AbortController();
   const request = apiClient.delete(`/items/${id}`, {
@@ -152,6 +121,5 @@ export default {
   getItemById,
   getItemsByUser,
   addItem,
-  updateItem,
   deleteItem,
 };
