@@ -41,11 +41,12 @@ function App() {
           path="/item-upload"
           element={<ItemUpload />}
         />
-      </Routes>
-      <Route
+        <Route
         path="/item/:itemId"
         element={<ItemDetail />}
       />
+      </Routes>
+      
     </>
   );
 }

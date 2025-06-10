@@ -91,7 +91,6 @@ const ItemUpload: FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadedItemName, setUploadedItemName] = useState<string | null>(null);
   const [otherCategory, setOtherCategory] = useState<string>("");
   const [mapInitialized, setMapInitialized] = useState(false);
 
@@ -312,52 +311,9 @@ const ItemUpload: FC = () => {
         submitData.append('image', uploadedImage);
       }
       
-      const response = await itemService.addItem(submitData);
+       await itemService.addItem(submitData);
       
-      console.log("Item upload response:", {
-        fullResponse: response,
-        data: response.data,
-        nestedData: response.data?.data,
-        nestedId: response.data?.data?._id
-      });
-      
-      let uploadedId = null;
-      let matchResultsData = null;
-      
-      if (response.data?.data?.id) {
-        uploadedId = response.data.data.id;
-        matchResultsData = response.data.matchResults;
-      } 
-      
-      if (uploadedId) {
-        setUploadedItemName(itemName);
-        
-        console.log("Successfully extracted item ID:", uploadedId);
-      } else {
-        console.error("Could not find item ID in response:", response);
-      }
-      
-      if (matchResultsData && matchResultsData.length > 0) {
-        const formattedMatches = matchResultsData.map((match: any) => ({
-          matchedItemId: match.item._id || match.item.id || match._id || match.id,
-          similarity: match.score / 100, 
-          itemName: match.item.name || match.itemName || match.name,
-          itemDescription: match.item.description || match.itemDescription || match.description,
-          itemImgURL: match.item.imgURL || match.item.imageUrl || match.imgURL || match.imageUrl,
-          ownerName: match.item.ownerName || match.ownerName,
-          ownerEmail: match.item.ownerEmail || match.ownerEmail
-        }));
-
-        // Log modal props before showing
-        console.log("Showing modal with props:", {
-          showMatchesModal: true,
-          uploadedItemId: uploadedId,
-          uploadedItemName,
-          matchResults: formattedMatches
-        });
-      } else {
         navigate('/profile');
-      }
     } catch (err: any) {
       console.error("Error uploading item:", err);
       

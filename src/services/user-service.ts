@@ -7,18 +7,13 @@ import { jwtDecode } from "jwt-decode";
 
 export { CanceledError };
 
-export interface iComment {
-  _id?: string;
-  content: string;
-  postId: string;
-  owner: string;
-}
 export interface IUser {
   _id?: string;
   email: string;
   userName: string;
   password?: string;
   imgURL?: string;
+  phoneNumber?: string;
   accessToken?: string;
   refreshToken?: string;
 }
@@ -86,7 +81,7 @@ const googleSignIn = async (credential: CredentialResponse) => {
       console.warn("No tokens returned from Google Sign-In!");
     }
 
-    return data; // החזר את המשתמש
+    return data; 
   } catch (error) {
     console.error("Google Sign-In failed:", error);
     throw error;
