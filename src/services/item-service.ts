@@ -114,6 +114,14 @@ const deleteItem = (id: string) => {
   return { request, abort: () => abortController.abort() };
 };
 
+const isResolved = (id: string) => {
+  const abortController = new AbortController();
+  const request = apiClient.put(`/items/${id}/resolve`, {
+    signal: abortController.signal,
+  });
+  return { request, abort: () => abortController.abort() };
+};
+
 export default {
   getAllItems,
   getAllLostItems,
@@ -122,4 +130,5 @@ export default {
   getItemsByUser,
   addItem,
   deleteItem,
+  isResolved,
 };

@@ -4,10 +4,12 @@ import { Login } from "./Login";
 import { RegistrationForm } from "./RegristrationForm";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
-import ItemUpload from "./ItemUpload";
+import ItemUpload from "./itemUpload";
 import LostItems from "./LostItems";
 import ItemDetail from "./ItemDetail";
 import Navigation from "./Navigation";
+import { NotificationsProvider } from "../hooks/useNotifications";
+import MatchConfirmation from "./MatchConfirmation";
 
 function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -15,6 +17,7 @@ function App() {
   if (loading) return <p>Loading...</p>;
   return (
     <>
+    <NotificationsProvider>
       <Navigation />
       <Routes>
         <Route
@@ -38,15 +41,19 @@ function App() {
           element={<UserProfile />}
         />
         <Route
-          path="/item-upload"
+          path="/upload-item"
           element={<ItemUpload />}
         />
         <Route
         path="/item/:itemId"
         element={<ItemDetail />}
       />
+      <Route
+        path="/match-confirmation/:matchId"
+        element={<MatchConfirmation />}
+      />
       </Routes>
-      
+      </NotificationsProvider>
     </>
   );
 }
