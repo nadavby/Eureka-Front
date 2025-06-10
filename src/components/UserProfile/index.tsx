@@ -1,18 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /** @format */
 
 import { FC, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useUserItems } from "../../hooks/useItems";
+import { Item } from "../../services/item-service";
 import userService from "../../services/user-service";
+import itemService from "../../services/item-service";
 import defaultAvatar from "../../assets/avatar.png";
 import { Navigate, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { isValidPhoneNumber, formatPhoneNumber } from 'react-phone-number-input';
 import { 
   faArrowLeft, 
   faImage, 
-  faThumbsUp, 
-  faComment, 
-  faEdit, 
-  faTrash 
+  faMapMarkerAlt,
+  faCalendarAlt,
+  faTag
 } from "@fortawesome/free-solid-svg-icons";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +26,10 @@ const profileFormSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   userName: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  phoneNumber: z.string().refine((val) => {
+    // Check if the phone number is valid using the library's validation
+    return isValidPhoneNumber(val) || val === '';
+  }, "Please enter a valid phone number"),
   profileImage: z.optional(z.instanceof(FileList))
 });
 
@@ -32,6 +40,7 @@ interface UserData {
   email: string;
   userName: string;
   password?: string;
+  phoneNumber?: string;
   imgURL?: string;
   accessToken?: string;
   refreshToken?: string;
@@ -45,6 +54,33 @@ const UserProfile: FC = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [tempImageURL, setTempImageUrl] = useState<string | null>(null);
   const navigate = useNavigate();
+  
+  // Get user items
+  const { items: Items, isLoading: itemsLoading, error: itemsError } = 
+    useUserItems(currentUser?._id || "");
+
+  // Transform items to match the expected structure
+  const items = (Items as Item[]).map((item:Item) => ({
+    _id: item._id,
+    name: item.name,
+    description: item.description,
+    category: item.category,
+    location: item.location ,
+    date: item.date,
+    itemType: (item.itemType) as 'lost' | 'found',
+    imageUrl: item.imageUrl, 
+    userId: item.userId,
+    ownerName: item.ownerName,
+    ownerEmail: item.ownerEmail,
+    isResolved: item.isResolved ,
+   matchId: item.matchedId,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt
+  }));
+
+  const lostItems = items.filter(item => (item.itemType).toLowerCase() === 'lost');
+  const foundItems = items.filter(item => (item.itemType ).toLowerCase() === 'found');
+
   const {
     register,
     handleSubmit,
@@ -56,7 +92,8 @@ const UserProfile: FC = () => {
     defaultValues: {
       email: "",
       userName: "",
-      password: ""
+      password: "",
+      phoneNumber: ""
     }
   });
 
@@ -68,6 +105,7 @@ const UserProfile: FC = () => {
       setValue("email", currentUser.email);
       setValue("userName", currentUser.userName || "");
       setValue("password", ""); 
+      setValue("phoneNumber", currentUser.phoneNumber || "");
     }
   }, [currentUser, setValue]);
 
@@ -75,10 +113,14 @@ const UserProfile: FC = () => {
     if (watchProfileImage && watchProfileImage.length > 0) {
       const file = watchProfileImage[0];
       setSelectedImage(file);
-      setTempImageUrl(URL.createObjectURL(file));
       
+      // Create and set the temporary URL for preview
+      const newTempUrl = URL.createObjectURL(file);
+      setTempImageUrl(newTempUrl);
+      
+      // Cleanup function to revoke the object URL
       return () => {
-        if (tempImageURL) URL.revokeObjectURL(tempImageURL);
+        URL.revokeObjectURL(newTempUrl);
       };
     }
   }, [watchProfileImage]);
@@ -91,11 +133,16 @@ const UserProfile: FC = () => {
     try {
       const updatedUserData: Partial<UserData> = {
         email: data.email,
-        userName: data.userName
+        userName: data.userName,
+        phoneNumber: data.phoneNumber
       };
       
       if (data.password && data.password.length >= 8) {
         updatedUserData.password = data.password;
+      }
+
+      if (data.phoneNumber && isValidPhoneNumber(data.phoneNumber)) {
+        updatedUserData.phoneNumber = data.phoneNumber;
       }
       
       if (selectedImage) {
@@ -129,6 +176,7 @@ const UserProfile: FC = () => {
       setValue("email", localUser.email);
       setValue("userName", localUser.userName || "");
       setValue("password", "");
+      setValue("phoneNumber", localUser.phoneNumber || "");
     }
     setSelectedImage(null);
     setTempImageUrl(null);
@@ -142,7 +190,7 @@ const UserProfile: FC = () => {
       try {
         const { request } = userService.deleteUser(localUser._id);
         await request;
-        navigate("/login");
+        window.location.href = "/login";
       } catch (error) {
         console.error("Failed to delete user account:", error);
       }
@@ -152,16 +200,47 @@ const UserProfile: FC = () => {
   const handleLogout = async () => {
     try {
       await userService.logout();
-      navigate("/login");
+      window.location.href = "/login";
     } catch (error) {
       console.error("Failed to logout:", error);
     }
   };
 
+  const handleDeleteItem = async (itemId: string) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+
+    try {
+      const { request } = itemService.deleteItem(itemId);
+      await request;
+      window.location.reload();
+    } catch (error) {
+      console.error("Error deleting item:", error);
+    }
+  };
+
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return "N/A";
-    const dateObj = date instanceof Date ? date : new Date(date);
-    return dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "N/A";
+    }
+  };
+
+  const formatLocation = (location: any): string => {
+    if (!location) return "Unknown location";
+    
+    if (typeof location === 'string') return location;
+    
+    if (location && typeof location === 'object') {
+      if (location.lat !== undefined && location.lng !== undefined) {
+        return `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}`;
+      }
+    }
+    
+    return String(location);
   };
 
   if (!loading && !isAuthenticated) return <Navigate to="/login" />;
@@ -186,7 +265,7 @@ const UserProfile: FC = () => {
                 src={tempImageURL || localUser.imgURL || defaultAvatar}
                 alt="Profile"
                 className="rounded-circle img-thumbnail"
-                style={{ width: "120px", height: "120px", objectFit: "cover" }}
+                style={{ width: "150px", height: "150px", objectFit: "cover" }}
               />
               
               {isEditing && (
@@ -217,7 +296,6 @@ const UserProfile: FC = () => {
             
             <div className="col-md-9">
               {!isEditing ? (
-                // Read-only view
                 <>
                   <p>
                     <strong>Username:</strong> {localUser.userName || "Not set"}
@@ -227,6 +305,9 @@ const UserProfile: FC = () => {
                   </p>
                   <p>
                     <strong>Password:</strong> ********
+                  </p>
+                  <p>
+                    <strong>Phone Number:</strong> {localUser.phoneNumber ? formatPhoneNumber(localUser.phoneNumber) : "Not set"}
                   </p>
                   <button
                     type="button"
@@ -248,7 +329,6 @@ const UserProfile: FC = () => {
                   </button>
                 </>
               ) : (
-                // Edit mode
                 <>
                   <div className="mb-3">
                     <label htmlFor="userName" className="form-label">Username:</label>
@@ -290,6 +370,19 @@ const UserProfile: FC = () => {
                     )}
                   </div>
                   
+                  <div className="mb-3">
+                    <label htmlFor="phoneNumber" className="form-label">Phone Number:</label>
+                    <input
+                      id="phoneNumber"
+                      {...register("phoneNumber")}
+                      type="tel"
+                      className={`form-control ${errors.phoneNumber ? "is-invalid" : ""}`}
+                    />
+                    {errors.phoneNumber && (
+                      <div className="invalid-feedback">{errors.phoneNumber.message}</div>
+                    )}
+                  </div>
+
                   <button
                     type="submit"
                     className="btn btn-success me-2"
@@ -307,6 +400,134 @@ const UserProfile: FC = () => {
             </div>
           </div>
         </form>
+      </div>
+      
+      <div className="mt-4">
+        <h3>My Lost Items</h3>
+        {itemsLoading ? (
+          <p>Loading items...</p>
+        ) : itemsError ? (
+          <p className="alert alert-danger">Error loading items: {itemsError}</p>
+        ) : lostItems.length === 0 ? (
+          <p className="alert alert-info">No lost items reported</p>
+        ) : (
+          <div className="row">
+            {lostItems.map((item: Item) => (
+              <div key={item._id} className="col-md-6 col-lg-4 mb-4">
+                <div className="card shadow-sm h-100">
+                  {item.imageUrl && (
+                    <img 
+                      src={item.imageUrl} 
+                      className="card-img-top" 
+                      alt={item.name}
+                      style={{ height: "200px", objectFit: "cover" }}
+                    />
+                  )}
+                  <div className="card-body d-flex flex-column">
+                    <h5 className="card-text">{item.description}</h5>
+                    <div className="mt-auto">
+                      <p className="card-text mb-1">
+                        <FontAwesomeIcon icon={faTag} className="me-2 text-secondary" />
+                        {item.category}
+                      </p>
+                      <p className="card-text mb-1">
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="me-2 text-danger" />
+                        {formatLocation(item.location)}
+                      </p>
+                      <p className="card-text">
+                        <FontAwesomeIcon icon={faCalendarAlt} className="me-2 text-info" />
+                        {formatDate(item.date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="card-footer bg-transparent d-flex justify-content-between">
+                    <button 
+                      className="btn btn-sm btn-primary"
+                      onClick={() => navigate(`/item/${item._id}`)}
+                    >
+                      View Details
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDeleteItem(item._id!)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div className="mt-4">
+        <h3>My Found Items</h3>
+        {itemsLoading ? (
+          <p>Loading items...</p>
+        ) : itemsError ? (
+          <p className="alert alert-danger">Error loading items: {itemsError}</p>
+        ) : foundItems.length === 0 ? (
+          <p className="alert alert-info">No found items reported</p>
+        ) : (
+          <div className="row">
+            {foundItems.map((item: Item) => (
+              <div key={item._id} className="col-md-6 col-lg-4 mb-4">
+                <div className="card shadow-sm h-100">
+                  {item.imageUrl && (
+                    <img 
+                      src={item.imageUrl} 
+                      className="card-img-top" 
+                      alt={item.name}
+                      style={{ height: "200px", objectFit: "cover" }}
+                    />
+                  )}
+                  <div className="card-body d-flex flex-column">
+                    <h5 className="card-text">{item.description}</h5>
+                    <div className="mt-auto">
+                      <p className="card-text mb-1">
+                        <FontAwesomeIcon icon={faTag} className="me-2 text-secondary" />
+                        {item.category}
+                      </p>
+                      <p className="card-text mb-1">
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="me-2 text-danger" />
+                        {formatLocation(item.location)}
+                      </p>
+                      <p className="card-text">
+                        <FontAwesomeIcon icon={faCalendarAlt} className="me-2 text-info" />
+                        {formatDate(item.date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="card-footer bg-transparent d-flex justify-content-between">
+                    <button 
+                      className="btn btn-sm btn-primary"
+                      onClick={() => navigate(`/item/${item._id}`)}
+                    >
+                      View Details
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDeleteItem(item._id!)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div className="my-4 text-center">
+        <button 
+          className="btn btn-success btn-lg"
+          onClick={() => navigate("/upload-item")}
+        >
+          <FontAwesomeIcon icon={faImage} className="me-2" />
+          Upload New Item
+        </button>
       </div>
     </div>
   );
