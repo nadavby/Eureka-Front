@@ -10,6 +10,7 @@ import ItemDetail from "./ItemDetail";
 import Navigation from "./Navigation";
 import { NotificationsProvider } from "../hooks/useNotifications";
 import MatchConfirmation from "./MatchConfirmation";
+import PublicUserProfile from "./PublicUserProfile";
 
 function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -17,42 +18,46 @@ function App() {
   if (loading) return <p>Loading...</p>;
   return (
     <>
-    <NotificationsProvider>
-      <Navigation />
-      <Routes>
-        <Route
-          path="/"
-          element={isAuthenticated ? <LostItems /> : <Login />}
-        />
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-        <Route
-          path="/register"
-          element={<RegistrationForm />}
-        />
-        <Route
-          path="/lost-items"
-          element={<LostItems />}
-        />
-        <Route
-          path="/profile"
-          element={<UserProfile />}
-        />
-        <Route
-          path="/upload-item"
-          element={<ItemUpload />}
-        />
-        <Route
-        path="/item/:itemId"
-        element={<ItemDetail />}
-      />
-      <Route
-        path="/match-confirmation/:matchId"
-        element={<MatchConfirmation />}
-      />
-      </Routes>
+      <NotificationsProvider>
+        <Navigation />
+        <Routes>
+          <Route
+            path="/public-user/:userId"
+            element={<PublicUserProfile />}
+          />
+          <Route
+            path="/"
+            element={isAuthenticated ? <LostItems /> : <Login />}
+          />
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+          <Route
+            path="/register"
+            element={<RegistrationForm />}
+          />
+          <Route
+            path="/lost-items"
+            element={<LostItems />}
+          />
+          <Route
+            path="/profile"
+            element={<UserProfile />}
+          />
+          <Route
+            path="/upload-item"
+            element={<ItemUpload />}
+          />
+          <Route
+            path="/item/:itemId"
+            element={<ItemDetail />}
+          />
+          <Route
+            path="/match-confirmation/:matchId"
+            element={<MatchConfirmation />}
+          />
+        </Routes>
       </NotificationsProvider>
     </>
   );
