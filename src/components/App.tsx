@@ -1,24 +1,27 @@
 /** @format */
+
+import { FC } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Login } from "./Login";
 import { RegistrationForm } from "./RegristrationForm";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
-import ItemUpload from "./itemUpload";
 import LostItems from "./LostItems";
+import ItemUpload from "./itemUpload";
 import ItemDetail from "./ItemDetail";
 import Navigation from "./Navigation";
 import { NotificationsProvider } from "../hooks/useNotifications";
 import MatchConfirmation from "./MatchConfirmation";
 import PublicUserProfile from "./PublicUserProfile";
+import Chats from "./Chats";
 
-function App() {
+const App: FC = () => {
   const { isAuthenticated, loading } = useAuth();
-
   if (loading) return <p>Loading...</p>;
+
   return (
-    <>
-      <NotificationsProvider>
+    <NotificationsProvider>
+      <div className="app">
         <Navigation />
         <Routes>
           <Route
@@ -57,10 +60,14 @@ function App() {
             path="/match-confirmation/:matchId"
             element={<MatchConfirmation />}
           />
+          <Route
+            path="/chats"
+            element={<Chats />}
+          />
         </Routes>
-      </NotificationsProvider>
-    </>
+      </div>
+    </NotificationsProvider>
   );
-}
+};
 
 export default App;

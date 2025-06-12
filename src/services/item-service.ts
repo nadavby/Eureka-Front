@@ -1,14 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/** @format */
+
 import { apiClient, CanceledError } from "./api-client";
 
 export { CanceledError };
+
+interface Location {
+  lat: number;
+  lng: number;
+}
 
 export interface Item {
   _id?: string;
   name: string;
   description: string;
   category: string;
-  location: string;
+  location: Location | null;
   date: string;
   itemType: "lost" | "found";
   imageUrl: string;
@@ -19,6 +26,44 @@ export interface Item {
   matchedId?: string;
   createdAt?: string;
   updatedAt?: string;
+  colors?: string[];
+  brand?: string;
+  condition?: string;
+  flaws?: string;
+  material?: string;
+  visionApiData?: {
+    labels?: string[];
+    objects?: Array<{
+      name: string;
+      score: number;
+      boundingBox?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }
+    }>;
+    texts?: Array<{
+      text: string;
+      confidence?: number;
+      boundingBox?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }
+    }>;
+    logos?: Array<{
+      description: string;
+      score: number;
+      boundingBox?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }
+    }>;
+  };
 }
 
 const getAllItems = (filters?: {
@@ -71,6 +116,8 @@ const getItemById = (id: string) => {
 
 const getItemsByUser = (userId: string) => {
   const abortController = new AbortController();
+  console.log("Fetching items for user:", userId);
+
   const request = apiClient.get<Item[]>(`/items?userId=${userId}`, {
     signal: abortController.signal,
   });
@@ -108,15 +155,8 @@ const addItem = async (formData: FormData) => {
 
 const deleteItem = (id: string) => {
   const abortController = new AbortController();
+  console.log("Deleting item:", id);
   const request = apiClient.delete(`/items/${id}`, {
-    signal: abortController.signal,
-  });
-  return { request, abort: () => abortController.abort() };
-};
-
-const isResolved = (id: string) => {
-  const abortController = new AbortController();
-  const request = apiClient.put(`/items/${id}/resolve`, {
     signal: abortController.signal,
   });
   return { request, abort: () => abortController.abort() };
@@ -130,5 +170,4 @@ export default {
   getItemsByUser,
   addItem,
   deleteItem,
-  isResolved,
 };
