@@ -1,139 +1,132 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/** @format */
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
   faTag,
   faMapMarkerAlt,
   faCalendarAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import itemService, { Item } from "../../services/item-service";
-import {
-  Map,
+} from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../hooks/useAuth';
+import itemService, { Item } from '../../services/item-service';
+import { 
+  Map, 
   AdvancedMarker,
   Pin,
-  APIProvider,
+  APIProvider
 } from "@vis.gl/react-google-maps";
-import "./styles.css";
+import './styles.css';
 
 const containerStyle = {
   width: "100%",
   height: "300px",
-  borderRadius: "8px",
+  borderRadius: '8px'
 };
 
 const defaultCenter = {
   lat: 32.0853,
-  lng: 34.7818,
+  lng: 34.7818
 };
 
 const ItemDetail: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [itemPosition, setItemPosition] = useState(defaultCenter);
   const [imageError, setImageError] = useState(false);
 
-  const updateMapCenter = useCallback((itemData: any) => {
+  const updateItemPosition = useCallback((itemData: any) => {
     if (itemData?.location?.lat && itemData?.location?.lng) {
-      const lat =
-        typeof itemData.location.lat === "string"
-          ? parseFloat(itemData.location.lat)
-          : itemData.location.lat;
-      const lng =
-        typeof itemData.location.lng === "string"
-          ? parseFloat(itemData.location.lng)
-          : itemData.location.lng;
-      console.log("Updating map center:", { lat, lng });
-      setMapCenter({ lat, lng });
+      const lat = typeof itemData.location.lat === 'string' ? parseFloat(itemData.location.lat) : itemData.location.lat;
+      const lng = typeof itemData.location.lng === 'string' ? parseFloat(itemData.location.lng) : itemData.location.lng;
+      console.log('Updating item position:', { lat, lng });
+      setItemPosition({ lat, lng });
     } else {
-      console.log("No valid location data in item:", itemData?.location);
+      console.log('No valid location data in item:', itemData?.location);
     }
   }, []);
 
   // Process image URL to ensure it's absolute
   const processImageUrl = useCallback((url: string) => {
-    if (!url) return "https://via.placeholder.com/60";
-
+    if (!url) return 'https://via.placeholder.com/60';
+    
     // If it's already an absolute URL, return it
-    if (url.startsWith("http://") || url.startsWith("https://")) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-
+    
     // If it's a relative URL starting with /public, adjust it
-    if (url.startsWith("/public")) {
+    if (url.startsWith('/public')) {
       return `${window.location.origin}${url}`;
     }
-
+    
     // For other relative URLs
     return `${window.location.origin}/${url}`;
   }, []);
 
   // Memoize the processed image URL
   const processedImageUrl = useMemo(() => {
-    return item?.imageUrl
-      ? processImageUrl(item.imageUrl)
-      : "https://via.placeholder.com/60";
+    return item?.imageUrl ? processImageUrl(item.imageUrl) : 'https://via.placeholder.com/60';
   }, [item?.imageUrl, processImageUrl]);
 
   useEffect(() => {
-    console.log("Component mounted or itemId changed:", itemId);
-
+    console.log('Component mounted or itemId changed:', itemId);
+    
     const fetchItem = async () => {
       if (!itemId) {
-        console.log("No itemId provided");
+        console.log('No itemId provided');
         return;
       }
-
+      
       try {
         setLoading(true);
-        console.log("Fetching item data...");
+        console.log('Fetching item data...');
         const { request } = itemService.getItemById(itemId);
         const response = await request;
         const itemData = response.data;
-        console.log("Raw item data received:", itemData);
-        console.log("Location from item:", itemData.location);
-
+        console.log('Raw item data received:', itemData);
+        console.log('Location from item:', itemData.location);
+        
         setItem(itemData);
-        updateMapCenter(itemData);
+        updateItemPosition(itemData);
       } catch (error) {
-        console.error("Error fetching item:", error);
-        setError("Failed to load item details");
+        console.error('Error fetching item:', error);
+        setError('Failed to load item details');
       } finally {
         setLoading(false);
       }
     };
 
     fetchItem();
-  }, [itemId, updateMapCenter]);
+  }, [itemId, updateItemPosition]);
 
   // Log state changes
   useEffect(() => {
-    console.log("State updated:", {
+    console.log('State updated:', {
       loading,
       hasItem: !!item,
-      mapCenter,
-      itemLocation: item?.location,
+      itemPosition,
+      itemLocation: item?.location
     });
-  }, [loading, item, mapCenter]);
+  }, [loading, item, itemPosition]);
 
   const formatLocation = (location: any): string => {
     if (!location) return "Unknown location";
-
-    if (typeof location === "string") return location;
-
-    if (location && typeof location === "object") {
+    
+    if (typeof location === 'string') return location;
+    
+    if (location && typeof location === 'object') {
       if (location.lat !== undefined && location.lng !== undefined) {
-        return `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(
-          4
-        )}`;
+        return `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}`;
       }
     }
-
+    
     return String(location);
   };
 
@@ -141,9 +134,7 @@ const ItemDetail: React.FC = () => {
     return (
       <div className="item-detail-container">
         <div className="text-center py-5">
-          <div
-            className="spinner-border text-primary"
-            role="status">
+          <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
           <p className="mt-3 text-muted">Loading...</p>
@@ -155,10 +146,13 @@ const ItemDetail: React.FC = () => {
   if (error || !item) {
     return (
       <div className="item-detail-container">
-        <div className="alert alert-danger">{error || "Item not found"}</div>
-        <button
+        <div className="alert alert-danger">
+          {error || 'Item not found'}
+        </div>
+        <button 
           className="back-button"
-          onClick={() => navigate(-1)}>
+          onClick={() => navigate(-1)}
+        >
           <FontAwesomeIcon icon={faArrowLeft} />
           <span>Go Back</span>
         </button>
@@ -169,14 +163,12 @@ const ItemDetail: React.FC = () => {
   return (
     <div className="item-detail-container">
       <div className="item-header">
-        <button
-          className="back-button"
-          onClick={() => navigate(-1)}>
+        <button className="back-button" onClick={() => navigate(-1)}>
           <FontAwesomeIcon icon={faArrowLeft} />
           <span>Back</span>
         </button>
         <h1 className="item-title">
-          {item.itemType === "lost" ? "Lost" : "Found"} Item Details
+          {item.itemType === 'lost' ? 'Lost' : 'Found'} Item Details
         </h1>
       </div>
 
@@ -189,8 +181,8 @@ const ItemDetail: React.FC = () => {
           <div className="row">
             <div className="col-md-6">
               <div className="item-image-container">
-                <img
-                  src={item.imageUrl}
+                <img 
+                  src={item.imageUrl} 
                   alt={item.name}
                   className="item-image"
                 />
@@ -215,9 +207,7 @@ const ItemDetail: React.FC = () => {
                     <FontAwesomeIcon icon={faMapMarkerAlt} />
                   </div>
                   <span className="info-label">Location</span>
-                  <span className="info-value">
-                    {formatLocation(item.location)}
-                  </span>
+                  <span className="info-value">{formatLocation(item.location)}</span>
                 </li>
                 <li className="info-item">
                   <div className="info-icon date">
@@ -226,9 +216,9 @@ const ItemDetail: React.FC = () => {
                   <span className="info-label">Date</span>
                   <span className="info-value">
                     {new Date(item.date).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </span>
                 </li>
@@ -241,80 +231,66 @@ const ItemDetail: React.FC = () => {
             <h5>Location on Map</h5>
             <div style={{ width: "100%", margin: "0 auto" }}>
               <APIProvider apiKey="AIzaSyAlx_vvH0P5fepk8bHpzO54syb5heCvJXI">
-                <Map
-                  style={containerStyle}
-                  center={mapCenter}
-                  zoom={15}
+                <Map 
+                  style={containerStyle} 
+                  defaultCenter={itemPosition}
+                  defaultZoom={15}
                   mapId="DEMO_MAP_ID"
-                  gestureHandling={"greedy"}
+                  gestureHandling={'greedy'}
                   disableDefaultUI={false}
                   zoomControl={true}
                   streetViewControl={false}
-                  mapTypeControl={false}>
-                  {/* Main marker */}
+                  mapTypeControl={false}
+                >
+                  {/* Item marker */}
                   <AdvancedMarker
-                    position={mapCenter}
-                    title={item.name}>
-                    <Pin
-                      background={"#4285F4"}
-                      borderColor={"#1967D2"}
-                      glyphColor={"#FFFFFF"}
-                    />
-                  </AdvancedMarker>
-
-                  {/* Custom marker with image */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      transform: "translate(-50%, -100%)",
-                      left: "50%",
-                      top: "50%",
-                      padding: "2px",
-                      backgroundColor: "white",
-                      borderRadius: "8px",
-                      boxShadow: "0 2px 7px 1px rgba(0,0,0,0.3)",
-                      width: "60px",
-                      height: "60px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      zIndex: 1000,
+                    position={itemPosition}
+                    title={item.name}
+                  >
+                    <div style={{
+                      padding: '2px',
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 7px 1px rgba(0,0,0,0.3)',
+                      width: '60px',
+                      height: '60px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden'
                     }}>
                     {!imageError ? (
                       <img
                         src={processedImageUrl}
                         alt={item.name}
                         style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          borderRadius: "6px",
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '6px',
                         }}
                         onError={() => {
-                          console.log(
-                            "Marker image failed to load, using fallback"
-                          );
+                          console.log('Marker image failed to load, using fallback');
                           setImageError(true);
                         }}
                         crossOrigin="anonymous"
                       />
                     ) : (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          backgroundColor: "#f0f0f0",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "12px",
-                          color: "#666",
-                        }}>
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: '#f0f0f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        color: '#666'
+                      }}>
                         {item.name.substring(0, 1).toUpperCase()}
                       </div>
                     )}
                   </div>
+                  </AdvancedMarker>
                 </Map>
               </APIProvider>
             </div>
@@ -325,4 +301,4 @@ const ItemDetail: React.FC = () => {
   );
 };
 
-export default ItemDetail;
+export default ItemDetail; 
