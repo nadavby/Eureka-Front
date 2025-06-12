@@ -52,7 +52,6 @@ apiClient.interceptors.response.use(
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         window.location.href = "/login";
-        console.error("Token refresh failed:", error);
       }
     }
     

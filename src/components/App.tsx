@@ -14,11 +14,12 @@ import { NotificationsProvider } from "../hooks/useNotifications";
 import MatchConfirmation from "./MatchConfirmation";
 import PublicUserProfile from "./PublicUserProfile";
 import Chats from "./Chats";
+import "./App.css";
 
 const App: FC = () => {
   const { isAuthenticated, loading } = useAuth();
   if (loading) return <p>Loading...</p>;
-
+  
   return (
     <NotificationsProvider>
       <div className="app">

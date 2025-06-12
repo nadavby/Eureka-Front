@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useCallback, useEffect } from 'react';
-import matchService, { IMatch } from '../services/match-service';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import matchService, { IMatch, CanceledError } from '../services/match-service';
 import { useAuth } from './useAuth';
+import  itemService  from '../services/item-service';
 
 export const useMatch = () => {
   const [matches, setMatches] = useState<IMatch[]>([]);
@@ -20,9 +20,10 @@ export const useMatch = () => {
     try {
       const response = await request;
       setMatches(response.data);
-    } catch (error:any) {
-      setError(error.message);
-      console.error('[MATCHES] Error fetching matches:', error);
+    } catch (err) {
+      if (err instanceof CanceledError) return;
+      setError(err.message);
+      console.error('[MATCHES] Error fetching matches:', err);
     } finally {
       setIsLoading(false);
     }
@@ -34,18 +35,21 @@ export const useMatch = () => {
     setIsLoading(true);
     setError(null);
 
-    const { request } = matchService.getById(matchId);
+    const { request, abort } = matchService.getById(matchId);
     
     try {
       const response = await request;
       return response.data;
-    } catch (error: any) {
-      setError(error.message);
-      console.error('[MATCHES] Error fetching match:', error);
+    } catch (err) {
+      if (err instanceof CanceledError) return null;
+      setError(err.message);
+      console.error('[MATCHES] Error fetching match:', err);
       return null;
     } finally {
       setIsLoading(false);
     }
+
+    return () => abort();
   }, []);
 
   const deleteMatch = useCallback(async (matchId: string) => {
@@ -56,19 +60,25 @@ export const useMatch = () => {
       await request;
       setMatches(prev => prev.filter(match => match._id !== matchId));
       return true;
-    } catch (error :any) {
-      setError(error.message);
-      console.error('[MATCHES] Error deleting match:', error);
+    } catch (err) {
+      if (err instanceof CanceledError) return false;
+      setError(err.message);
+      console.error('[MATCHES] Error deleting match:', err);
       return false;
     }
   }, []);
 
+  // Initial fetch of matches
   useEffect(() => {
     if (currentUser?._id) {
       fetchMatches();
     }
   }, [currentUser?._id, fetchMatches]);
 
+  // Log when matches change
+  useEffect(() => {
+    console.log('[MATCHES] Current matches:', matches);
+  }, [matches]);
 
   return {
     matches,
@@ -79,5 +89,48 @@ export const useMatch = () => {
     deleteMatch
   };
 };
+
+export const useMatchItems = (itemIds: string[]) => {
+  const [matchItems, setMatchItems] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      if (!itemIds.length) {
+        setMatchItems([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const items = await Promise.all(
+          itemIds.map(async (id) => {
+            try {
+              const { request } = itemService.getItemById(id);
+              const response = await request;
+              return response.data;
+            } catch (error) {
+              console.error(`Error fetching item ${id}:`, error);
+              return null;
+            }
+          })
+        );
+
+        setMatchItems(items.filter(item => item !== null));
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching match items:', error);
+        setError('Failed to fetch match items');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [itemIds]);
+
+  return { matchItems, isLoading, error };
+}; 
 
 

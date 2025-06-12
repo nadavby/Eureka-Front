@@ -1,4 +1,3 @@
-/** @format */
 import React from "react";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -12,20 +11,18 @@ const UserQRCode: React.FC<Props> = ({ userId, showUrl = false }) => {
 
   return (
     <div className="qr-code-container">
-      <QRCodeSVG
-        value={userProfileUrl}
+      <QRCodeSVG 
+        value={userProfileUrl} 
         size={200}
         level="H"
         includeMargin={true}
         style={{
-          padding: "8px",
-          borderRadius: "8px",
+          padding: '8px',
+          borderRadius: '8px',
         }}
       />
       {showUrl && (
-        <p className="text-sm text-gray-500 text-center break-all mt-2">
-          {userProfileUrl}
-        </p>
+        <p className="text-sm text-gray-500 text-center break-all mt-2">{userProfileUrl}</p>
       )}
     </div>
   );

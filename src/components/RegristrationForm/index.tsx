@@ -20,6 +20,7 @@ const schema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   img: z.optional(z.instanceof(FileList)),
   phoneNumber: z.string().refine((val) => {
+    // Check if the phone number is valid using the library's validation
     return isValidPhoneNumber(val) || val === '';
   }, "Please enter a valid phone number")
 });
@@ -195,17 +196,19 @@ export const RegistrationForm: FC = () => {
                     <FontAwesomeIcon icon={faPhone} className="me-2" />
                     Phone Number
                   </label>
-                  <div className={errors.phoneNumber ? "is-invalid" : ""}>
+                  <div className={`phone-input-wrapper ${errors.phoneNumber ? "is-invalid" : ""}`}>
                     <PhoneInput
-                      international
+                      international={false}
                       defaultCountry="IL"
                       value={phoneValue}
                       onChange={setPhoneValue}
                       id="phoneNumber"
+                      useNationalFormatForDefaultCountry={true}
+                      displayInitialValueAsLocalNumber={true}
                     />
                   </div>
                   {errors.phoneNumber && (
-                    <div className="invalid-feedback">{errors.phoneNumber.message}</div>
+                    <div className="invalid-feedback d-block">{errors.phoneNumber.message}</div>
                   )}
                 </div>
 

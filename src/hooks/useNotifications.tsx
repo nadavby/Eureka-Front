@@ -1,13 +1,12 @@
 /** @format */
 
-import React, {
+import {
   useCallback,
   useState,
   useEffect,
   createContext,
   useContext,
   ReactNode,
-  Context
 } from "react";
 import socketService from "../services/notification.socket.service";
 import notificationService, {
@@ -29,9 +28,9 @@ interface NotificationsContextType {
   unreadCount: number;
 }
 
-const NotificationsContext = createContext<NotificationsContextType | null>(null) as Context<NotificationsContextType>;
-
-NotificationsContext.displayName = 'NotificationsContext';
+const NotificationsContext = createContext<NotificationsContextType | null>(
+  null
+);
 
 export const useNotifications = () => {
   const context = useContext(NotificationsContext);
@@ -43,7 +42,13 @@ export const useNotifications = () => {
   return context;
 };
 
-export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
+interface NotificationsProviderProps {
+  children: ReactNode;
+}
+
+export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({
+  children,
+}) => {
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -253,5 +258,9 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
     unreadCount,
   };
 
-  return React.createElement(NotificationsContext.Provider, { value }, children);
+  return (
+    <NotificationsContext.Provider value={value}>
+      {children}
+    </NotificationsContext.Provider>
+  );
 };
